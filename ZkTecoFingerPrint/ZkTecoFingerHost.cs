@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace ZkTecoFingerPrint;
 
+
 public class ZkTecoFingerHost
 {
     public static event Action? OnClosing;
@@ -46,7 +47,7 @@ public class ZkTecoFingerHost
         return new ZkResult<int>((ZkResponse)result, result);
     }
 
-    public static IObservable<ZkResult<ZkFingerPrintResult>> ObserveDevice(int deviceIndex, TimeSpan pollingDelay, bool releaseOnFailure = true)
+    public static IObservable<ZkResult<ZkFingerPrintResult>> ObserveDevice(int deviceIndex, int pollingDelayMs = 0, bool releaseOnFailure = false)
     {
         return Observable.Create<ZkResult<ZkFingerPrintResult>>(subscribeAsync: async (observer, ct) =>
                                                                       {
@@ -68,8 +69,7 @@ public class ZkTecoFingerHost
                                                                                   observer.OnError(e);
                                                                                   if (releaseOnFailure) Close();
                                                                               }
-
-                                                                              await Task.Delay(pollingDelay, ct);
+                                                                              if (pollingDelayMs > 0) await Task.Delay(pollingDelayMs, ct);
                                                                           }
                                                                           observer.OnCompleted();
                                                                       });
@@ -111,14 +111,18 @@ public class ZkTecoFingerHost
         GetParameters(handle, 1103, serialNumberBuffer, ref size);
         GetParameters(handle, 1102, productNameBuffer, ref size);
 
-        var serialNumber = Encoding.Default.GetString(serialNumberBuffer);
-        var productName = Encoding.Default.GetString(productNameBuffer);
+        var serialNumber = Encoding.UTF8.GetString(serialNumberBuffer);
+        var productName = Encoding.UTF8.GetString(productNameBuffer);
+
+        ArrayPool<byte>.Shared.Return(serialNumberBuffer);
+        ArrayPool<byte>.Shared.Return(productNameBuffer);
 
         int width = 0, height = 0, dpi = 0;
         var response = (ZkResponse)ZKFPM_GetCaptureParamsEx(handle, ref width, ref height, ref dpi);
         if (response is not ZkResponse.Ok)
             return new ZkDeviceResult(response);
-        var device = new ZkFingerPrintDevice(handle, width, height, dpi, serialNumber, productName);
+        var device = new ZkFingerPrintDevice(handle, width, height, dpi, serialNumber.TrimNonAscii(), productName.TrimNonAscii());
+
         return new ZkDeviceResult(response, device);
     }
 }

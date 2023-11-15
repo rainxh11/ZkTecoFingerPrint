@@ -1,10 +1,11 @@
 ﻿#nullable enable
+using SourceAFIS;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using SourceAFIS;
+using System.Text.RegularExpressions;
 
 namespace ZkTecoFingerPrint;
 
@@ -16,7 +17,7 @@ public static class Extensions
     private static FingerprintMatcher GetMatcher(this ZkFingerPrintResult fingerPrintResult)
     {
         return Matchers.GetOrAdd(fingerPrintResult.TemplateHash,
-                                  _ => new FingerprintMatcher(fingerPrintResult.Template));
+                                 _ => new FingerprintMatcher(fingerPrintResult.Template));
     }
 
     public static double Match(this ZkFingerPrintResult fingerPrintResult, FingerprintTemplate template)
@@ -50,5 +51,11 @@ public static class Extensions
     {
         var bytes = Sha1.ComputeHash(value);
         return BitConverter.ToString(bytes);
+    }
+
+    public static string TrimNonAscii(this string value)
+    {
+        var regExp = new Regex("[^ -~]+");
+        return regExp.Replace(value, "");
     }
 }

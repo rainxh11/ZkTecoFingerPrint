@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
-	  <Version>1.1.0</Version>
+	  <Version>1.2.0</Version>
 	  <StartupObject />
 	  <Authors>Chakhoum Ahmed (github.com/rainxh11)</Authors>
 	  <Description>A trimmed down sane API for using ZkTeco fingerprint reader usb devices</Description>

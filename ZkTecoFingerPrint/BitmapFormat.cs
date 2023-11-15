@@ -39,7 +39,7 @@ namespace ZkTecoFingerPrint
 
         public static byte[] RotatePic(byte[] bmpBuf, int width, int height, int returnBufferLength)
         {
-            
+
             var bmpBuflen = width * height;
             var resBuf = new byte[returnBufferLength];
             for (var rowLoop = 0; rowLoop < bmpBuflen;)
