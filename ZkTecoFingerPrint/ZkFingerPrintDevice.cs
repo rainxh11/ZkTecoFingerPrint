@@ -8,6 +8,13 @@ using System.Threading.Tasks;
 
 namespace ZkTecoFingerPrint;
 
+public class ZkFingerDeviceInfo
+{
+    public IntPtr Handle { get; set; }
+    public string Name { get; set; }
+    public string SerialNumber { get; set; }
+}
+
 public class ZkFingerPrintDevice : IDisposable
 {
     internal ZkFingerPrintDevice(IntPtr handle, int width, int height, int dpi,
@@ -51,7 +58,11 @@ public class ZkFingerPrintDevice : IDisposable
             var imageDataSizeBuffer = ArrayPool<byte>.Shared.Rent(32);
             var dataSize = 32;
             var imageDataSizeResult = ZkTecoFingerHost.GetParameters(Handle, 106, imageDataSizeBuffer, ref dataSize);
-            if (imageDataSizeResult != ZkResponse.Ok) return new ZkResult<ZkFingerPrintResult?>(imageDataSizeResult, null);
+            if (imageDataSizeResult != ZkResponse.Ok)
+            {
+                ArrayPool<byte>.Shared.Return(imageDataSizeBuffer);
+                return new ZkResult<ZkFingerPrintResult?>(imageDataSizeResult, null);
+            }
             var imageDataSize = BitConverter.ToInt32(imageDataSizeBuffer, 0);
 
             var buffer = new byte[imageDataSize];
@@ -66,11 +77,18 @@ public class ZkFingerPrintDevice : IDisposable
             if (response == ZkResponse.Ok)
                 Marshal.Copy(pointer, buffer, 0, buffer.Length);
             Marshal.FreeHGlobal(pointer);
+            Marshal.FreeHGlobal(templatePointer);
 
+        ArrayPool<byte>.Shared.Return(imageDataSizeBuffer);
             //var bitmap = ZkTecoFingerPrint.BitmapFormat.GetBitmap(buffer, Width, Height).ToArray();
 
             return new ZkResult<ZkFingerPrintResult?>(response, response is ZkResponse.Ok
-                                                                    ? new ZkFingerPrintResult(buffer, Width, Height, Dpi)
+                                                                    ? new ZkFingerPrintResult(buffer, Width, Height, new ZkFingerDeviceInfo()
+                                                                        {
+                                                                            Handle = Handle,
+                                                                            Name = Name,
+                                                                            SerialNumber = SerialNumber
+                                                                        })
                                                                     : null);
         }
 
@@ -87,9 +105,15 @@ public class ZkFingerPrintDevice : IDisposable
         if (response == ZkResponse.Ok)
             Marshal.Copy(pointer, buffer, 0, buffer.Length);
         Marshal.FreeHGlobal(pointer);
+        Marshal.FreeHGlobal(templatePointer);
 
         return new ZkResult<ZkFingerPrintResult?>(response, response is ZkResponse.Ok
-                                                                ? new ZkFingerPrintResult(buffer, Width, Height, Dpi)
+                                                                ? new ZkFingerPrintResult(buffer, Width, Height, new ZkFingerDeviceInfo()
+                                                                    {
+                                                                        Handle = Handle,
+                                                                        Name = Name,
+                                                                        SerialNumber = SerialNumber
+                                                                    })
                                                                 : null);
     }
 

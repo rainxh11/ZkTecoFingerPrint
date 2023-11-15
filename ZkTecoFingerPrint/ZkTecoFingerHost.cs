@@ -4,6 +4,7 @@ using System.Buffers;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ZkTecoFingerPrint;
 
@@ -45,7 +46,7 @@ public class ZkTecoFingerHost
         return new ZkResult<int>((ZkResponse)result, result);
     }
 
-    public static IObservable<ZkResult<ZkFingerPrintResult>> ObserveDevice(int deviceIndex, bool releaseOnFailure = true)
+    public static IObservable<ZkResult<ZkFingerPrintResult>> ObserveDevice(int deviceIndex, TimeSpan pollingDelay, bool releaseOnFailure = true)
     {
         return Observable.Create<ZkResult<ZkFingerPrintResult>>(subscribeAsync: async (observer, ct) =>
                                                                       {
@@ -67,6 +68,8 @@ public class ZkTecoFingerHost
                                                                                   observer.OnError(e);
                                                                                   if (releaseOnFailure) Close();
                                                                               }
+
+                                                                              await Task.Delay(pollingDelay, ct);
                                                                           }
                                                                           observer.OnCompleted();
                                                                       });

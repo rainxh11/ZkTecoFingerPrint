@@ -1,10 +1,8 @@
 ﻿using System.Reactive.Linq;
 using ZkTecoFingerPrint;
-using static System.Net.Mime.MediaTypeNames;
-
 
 ZkTecoFingerHost.Initialize();
-ZkTecoFingerHost.ObserveDevice(0)
+ZkTecoFingerHost.ObserveDevice(0, TimeSpan.FromMilliseconds(250))
                 .Where(x => x.IsSuccess)
                 .Do(x => File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, $"{DateTime.Now.ToFileTime()}.bmp"), x.Value!.Bitmap))
                 .Subscribe();
