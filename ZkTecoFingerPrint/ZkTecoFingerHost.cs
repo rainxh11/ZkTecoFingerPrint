@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Buffers;
+using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -42,6 +43,33 @@ public class ZkTecoFingerHost
     {
         var result = ZKFPM_Init();
         return new ZkResult<int>((ZkResponse)result, result);
+    }
+
+    public static IObservable<ZkResult<ZkFingerPrintResult>> ObserveDevice(int deviceIndex, bool releaseOnFailure = true)
+    {
+        return Observable.Create<ZkResult<ZkFingerPrintResult>>(subscribeAsync: async (observer, ct) =>
+                                                                      {
+                                                                          while (!ct.IsCancellationRequested)
+                                                                          {
+                                                                              try
+                                                                              {
+                                                                                  if (releaseOnFailure) Initialize();
+                                                                                  using var device = ZkTecoFingerHost.OpenDevice(deviceIndex);
+                                                                                  if (!device.IsSuccess) continue;
+                                                                                  while (!ct.IsCancellationRequested)
+                                                                                  {
+                                                                                      var fingerprint = await device.Value!.AcquireFingerprintAsync(ct);
+                                                                                      observer.OnNext(fingerprint!);
+                                                                                  }
+                                                                              }
+                                                                              catch (Exception e)
+                                                                              {
+                                                                                  observer.OnError(e);
+                                                                                  if (releaseOnFailure) Close();
+                                                                              }
+                                                                          }
+                                                                          observer.OnCompleted();
+                                                                      });
     }
 
     public static ZkResponse Close()
