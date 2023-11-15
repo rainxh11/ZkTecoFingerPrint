@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -37,24 +38,24 @@ public class ZkTecoFingerHost
         ref int cbParamValue);
 
 
-    public ZkResult<int> Initialize()
+    public static ZkResult<int> Initialize()
     {
         var result = ZKFPM_Init();
         return new ZkResult<int>((ZkResponse)result, result);
     }
 
-    public ZkResponse Close()
+    public static ZkResponse Close()
     {
         OnClosing?.Invoke();
         return (ZkResponse)ZKFPM_Terminate();
     }
 
-    public int GetDeviceCount()
+    public static int GetDeviceCount()
     {
         return ZKFPM_GetDeviceCount();
     }
 
-    private static ZkResponse GetParameters(IntPtr devHandle, int code, byte[] paramValue, ref int size)
+    internal static ZkResponse GetParameters(IntPtr devHandle, int code, byte[] paramValue, ref int size)
     {
         if (devHandle == IntPtr.Zero)
             return ZkResponse.InvalidHandle;
@@ -67,21 +68,26 @@ public class ZkTecoFingerHost
         return parameters;
     }
 
-    public ZkDeviceResult OpenDevice(int index)
+    public static ZkDeviceResult OpenDevice(int index)
     {
         var handle = ZKFPM_OpenDevice(index);
         if (handle == IntPtr.Zero)
             return new ZkDeviceResult(ZkResponse.InvalidHandle);
 
-        var numArray = new byte[64];
+        var serialNumberBuffer = ArrayPool<byte>.Shared.Rent(64);
+        var productNameBuffer = ArrayPool<byte>.Shared.Rent(64);
         var size = 64;
-        GetParameters(handle, 1103, numArray, ref size);
-        var serialNumber = Encoding.Default.GetString(numArray);
+        GetParameters(handle, 1103, serialNumberBuffer, ref size);
+        GetParameters(handle, 1102, productNameBuffer, ref size);
+
+        var serialNumber = Encoding.Default.GetString(serialNumberBuffer);
+        var productName = Encoding.Default.GetString(productNameBuffer);
+
         int width = 0, height = 0, dpi = 0;
         var response = (ZkResponse)ZKFPM_GetCaptureParamsEx(handle, ref width, ref height, ref dpi);
         if (response is not ZkResponse.Ok)
             return new ZkDeviceResult(response);
-        var device = new ZkFingerPrintDevice(handle, width, height, dpi, serialNumber);
+        var device = new ZkFingerPrintDevice(handle, width, height, dpi, serialNumber, productName);
         return new ZkDeviceResult(response, device);
     }
 }

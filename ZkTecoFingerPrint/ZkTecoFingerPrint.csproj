@@ -3,10 +3,32 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+	  <Version>1.0.4</Version>
+	  <StartupObject />
+	  <Authors>Chakhoum Ahmed (github.com/rainxh11)</Authors>
+	  <Description>A trimmed down sane API for using ZkTeco fingerprint reader usb devices</Description>
+	  <Copyright>© 2023 Chakhoum Ahmed</Copyright>
+	  <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+	  <PackageProjectUrl>https://github.com/rainxh11/ZkTecoFingerPrint</PackageProjectUrl>
+	  <RepositoryUrl>https://github.com/rainxh11/ZkTecoFingerPrint</RepositoryUrl>
+	  <RepositoryType>github</RepositoryType>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <PackageTags>zkteco;fingerprint;reader</PackageTags>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SourceAFIS" Version="3.13.0" />
+	  <None Include="..\README.md" Pack="true" PackagePath="\" />
+	  <None Include="..\LICENSE.txt" Pack="true" PackagePath="\" />
+	  <PackageReference Include="SourceAFIS" Version="3.13.0" />
   </ItemGroup>
 
+	<Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
+		<ItemGroup>
+			<BuildOutputInPackage
+				Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+		</ItemGroup>
+	</Target>
 </Project>
