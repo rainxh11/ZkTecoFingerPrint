@@ -12,6 +12,7 @@ if (device.IsSuccess)
         if (fingerprint.IsSuccess)
         {
             var image = fingerprint.Value?.Bitmap;
+            File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, $"{DateTime.Now.ToFileTime()}.bmp"), image);
         }
     }
 
