@@ -4,7 +4,7 @@ using SourceAFIS;
 namespace ZkTecoFingerPrint;
 
 
-public class ZkFingerPrintResult
+public class ZkFingerPrintResult 
 {
     public ZkFingerPrintResult(byte[] bitmap, int width, int height, ZkFingerDeviceInfo deviceInfo = null)
     {
