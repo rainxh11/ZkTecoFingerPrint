@@ -12,7 +12,7 @@ this library uses native ZkTeco dlls directly instead of the buggy `libzkfpcshar
 dotnet add package ZkTecoFingerPrint
 ```
 # Usage:
-1. Initiliaze and Query devices  count:
+1. Initialize and Query devices  count:
 ```csharp
 // Initialize the ZkTeco Library first
 ZkTecoFingerHost.Initialize();
